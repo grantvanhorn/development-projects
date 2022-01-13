@@ -1,36 +1,35 @@
 import {
   ActionPanel,
-  Color,
-  Detail,
   getPreferenceValues,
   List,
   OpenAction,
+  Icon,
 } from '@raycast/api';
 import {
   readdirSync,
   readFileSync,
 } from 'fs';
-import React from 'react';
-import { ProjectInterface } from './types';
+import {
+  ProjectInterface,
+  PackageJSONInterface,
+  PreferencesInterface,
+} from './types';
 
-const ignoreList = [
+const ignoreList: Array<string> = [
   '.DS_Store',
 ];
 
 const checkForPackageJSON = (devDirPath: string, dir: string) => {
   try {
-    const jsonRaw = readFileSync(`${devDirPath}/${dir}/package.json`);
-    const json = JSON.parse(jsonRaw);
-
-    return json;
+    const jsonRaw: string = readFileSync(`${devDirPath}/${dir}/package.json`).toString();
+    return JSON.parse(jsonRaw);
   } catch (e) {
     return null;
   }
 }
 
-const pickIcon = (packageJSON) => {
+const pickIcon = (packageJSON: PackageJSONInterface) => {
   const raw = JSON.stringify(packageJSON);
-  console.log(raw);
 
   if (raw.includes('next')) {
     return 'nextjs.png';
@@ -43,11 +42,32 @@ const pickIcon = (packageJSON) => {
   return 'nodejs.png';
 }
 
+const getDevDirProjects = (devDir: string): Array<string> => {
+  const projectDirs: Array<string> = readdirSync(devDir);
+  const filteredProjectDirs: Array<string> = projectDirs.filter((dir: string) => !ignoreList.includes(dir));
+  return filteredProjectDirs;
+};
+
+const createConfigForAllProjects = (devDir: string, projectDirs: Array<string>): Array<ProjectInterface> => {
+  const projects: Array<ProjectInterface> = projectDirs.map((dir: string) => {
+
+
+    return {
+      name: dir,
+      description: '',
+      icon: '',
+      target: `${devDir}/${dir}`,
+    }
+  });
+
+  return projects;
+};
+
 const Dev = () => {
-  const preferences = getPreferenceValues();
   const {
     devDir,
-  } = preferences;
+  }: PreferencesInterface = getPreferenceValues();
+
   const projects: Array<ProjectInterface> = readdirSync(devDir).filter((dir: string) => !ignoreList.includes(dir)).map((dir: string) => {
     const projectInfo = {
       name: dir,
@@ -73,7 +93,7 @@ const Dev = () => {
     {projects.map(({name, description, icon, target}) => (
     <List.Item
       key={name}
-      icon={{ source: icon }}
+      icon={icon.length > 0 ? { source: icon } : Icon.Terminal}
       title={name}
       accessoryTitle={description}
       actions={<ActionPanel>

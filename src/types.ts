@@ -4,3 +4,8 @@ export interface ProjectInterface {
   icon: string;
   target: string;
 }
+
+export interface PackageJSONInterface {
+  title: string;
+  description: string;
+}
