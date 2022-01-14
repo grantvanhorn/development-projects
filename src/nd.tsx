@@ -10,9 +10,9 @@ import {
   readFileSync,
 } from 'fs';
 import {
-  ProjectInterface,
   PackageJSONInterface,
   PreferencesInterface,
+  ProjectInterface,
 } from './types';
 
 const ignoreList: Array<string> = [
@@ -53,6 +53,14 @@ const pickIcon = (packageJSON: PackageJSONInterface) => {
     return 'react.png';
   }
 
+  if (raw.includes('vue')) {
+    return 'vue.png';
+  }
+
+  if (raw.includes('graphql')) {
+    return 'graphql.png';
+  }
+
   return 'nodejs.png';
 }
 
@@ -62,31 +70,28 @@ const getDevDirProjects = (devDir: string): Array<string> => {
   return filteredProjectDirs;
 };
 
-const createConfigForAllProjects = (devDir: string, projectDirs: Array<string>): Array<ProjectInterface> => {
-  const projects: Array<ProjectInterface> = projectDirs.map((dir: string) => {
-    let projectConfig: ProjectInterface = {
-      name: dir,
-      description: '',
-      icon: 'nodejs.png',
-      target: `${devDir}/${dir}`,
-    };
+const createConfigForNodeProjects = (devDir: string, projectDirs: Array<string>): Array<ProjectInterface> => {
+  const projects: Array<ProjectInterface> = [];
+
+   projectDirs.forEach((dir: string) => {
     const json = checkForPackageJSON(devDir, dir);
 
     if (!json) {
-      return projectConfig;
+      return;
     }
 
     const {
       formatted,
     } = json;
 
-    projectConfig = {
-      ...projectConfig,
-      ...formatted,
-      name: formatted.name || projectConfig.name,
+    const projectConfig: ProjectInterface = {
+      name: formatted.name || dir,
+      description: formatted.description || '',
+      icon: formatted.icon || 'nodejs.png',
+      target: `${devDir}/${dir}`,
     };
 
-    return projectConfig;
+    projects.push(projectConfig);
   });
 
   return projects;
@@ -107,7 +112,7 @@ const Dev = () => {
   }
 
   try {
-    projects = createConfigForAllProjects(devDir, projectDirs);
+    projects = createConfigForNodeProjects(devDir, projectDirs);
   } catch {
     return <Detail markdown={"Error building projects list data."} />;
   }
