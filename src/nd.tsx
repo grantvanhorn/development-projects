@@ -50,7 +50,7 @@ const pickIcon = (packageJSON: PackageJSONInterface) => {
   }
 
   if (raw.includes('react')) {
-    return 'react.png';
+    return 'react-small.png';
   }
 
   if (raw.includes('vue')) {
@@ -58,7 +58,7 @@ const pickIcon = (packageJSON: PackageJSONInterface) => {
   }
 
   if (raw.includes('graphql')) {
-    return 'graphql.png';
+    return 'graphql-small.png';
   }
 
   return 'nodejs.png';
