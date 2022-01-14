@@ -2,6 +2,7 @@ import {
   ActionPanel,
   Detail,
   getPreferenceValues,
+  ImageMask,
   List,
   OpenAction,
 } from '@raycast/api';
@@ -45,12 +46,16 @@ const checkForPackageJSON = (devDirPath: string, dir: string) => {
 const pickIcon = (packageJSON: PackageJSONInterface) => {
   const raw = JSON.stringify(packageJSON);
 
+  // The order of the if's here are in an attempt to
+  // get the most specific form of a node project.
+  // ex: next is before react because next is a specific
+  // implementation of react.
   if (raw.includes('next')) {
     return 'nextjs.png';
   }
 
   if (raw.includes('react')) {
-    return 'react-small.png';
+    return 'react.png';
   }
 
   if (raw.includes('vue')) {
@@ -127,7 +132,7 @@ const Dev = () => {
       }) => (
         <List.Item
           key={name}
-          icon={{ source: icon }}
+          icon={{ source: icon, mask: ImageMask.RoundedRectangle }}
           title={name}
           accessoryTitle={description}
           actions={<ActionPanel>
