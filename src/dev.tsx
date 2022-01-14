@@ -1,9 +1,9 @@
 import {
   ActionPanel,
+  Detail,
   getPreferenceValues,
   List,
   OpenAction,
-  Icon,
 } from '@raycast/api';
 import {
   readdirSync,
@@ -19,10 +19,24 @@ const ignoreList: Array<string> = [
   '.DS_Store',
 ];
 
+const formatPackageJSON = (parsed: PackageJSONInterface) => {
+  return {
+    name: parsed.title || parsed.name || null,
+    description: parsed.description || parsed.version || parsed.author,
+    icon: pickIcon(parsed),
+  };
+};
+
 const checkForPackageJSON = (devDirPath: string, dir: string) => {
   try {
-    const jsonRaw: string = readFileSync(`${devDirPath}/${dir}/package.json`).toString();
-    return JSON.parse(jsonRaw);
+    const raw: string = readFileSync(`${devDirPath}/${dir}/package.json`).toString();
+    const parsed: PackageJSONInterface = JSON.parse(raw);
+    const formatted = formatPackageJSON(parsed);
+    return {
+      raw,
+      parsed,
+      formatted,
+    }
   } catch (e) {
     return null;
   }
@@ -50,14 +64,29 @@ const getDevDirProjects = (devDir: string): Array<string> => {
 
 const createConfigForAllProjects = (devDir: string, projectDirs: Array<string>): Array<ProjectInterface> => {
   const projects: Array<ProjectInterface> = projectDirs.map((dir: string) => {
-
-
-    return {
+    let projectConfig: ProjectInterface = {
       name: dir,
       description: '',
-      icon: '',
+      icon: 'nodejs.png',
       target: `${devDir}/${dir}`,
+    };
+    const json = checkForPackageJSON(devDir, dir);
+
+    if (!json) {
+      return projectConfig;
     }
+
+    const {
+      formatted,
+    } = json;
+
+    projectConfig = {
+      ...projectConfig,
+      ...formatted,
+      name: formatted.name || projectConfig.name,
+    };
+
+    return projectConfig;
   });
 
   return projects;
@@ -67,50 +96,52 @@ const Dev = () => {
   const {
     devDir,
   }: PreferencesInterface = getPreferenceValues();
+  let projectDirs;
+  let projects;
 
-  const projects: Array<ProjectInterface> = readdirSync(devDir).filter((dir: string) => !ignoreList.includes(dir)).map((dir: string) => {
-    const projectInfo = {
-      name: dir,
-      description: '',
-      icon: '',
-      target: `${devDir}/${dir}`,
-    };
+  try {
+    projectDirs = getDevDirProjects(devDir);
+  }
+  catch {
+    return <Detail markdown={"Error finding project directories."}/>;
+  }
 
-    const packageJSON = checkForPackageJSON(devDir, dir);
-
-    if (packageJSON) {
-      if (packageJSON.title) {
-        projectInfo.name = packageJSON.title;
-      }
-      projectInfo.description = packageJSON.description ? packageJSON.description : '';
-      projectInfo.icon = pickIcon(packageJSON);
-    }
-
-    return projectInfo;
-  });
+  try {
+    projects = createConfigForAllProjects(devDir, projectDirs);
+  } catch {
+    return <Detail markdown={"Error building projects list data."} />;
+  }
 
   return <List>
-    {projects.map(({name, description, icon, target}) => (
-    <List.Item
-      key={name}
-      icon={icon.length > 0 ? { source: icon } : Icon.Terminal}
-      title={name}
-      accessoryTitle={description}
-      actions={<ActionPanel>
-        <OpenAction
-          title="Open project in VSCode"
-          icon="command-icon.png"
-          target={target}
-          application="Visual Studio Code"
+    {
+      projects.map(({
+        name,
+        description,
+        icon,
+        target
+      }) => (
+        <List.Item
+          key={name}
+          icon={{ source: icon }}
+          title={name}
+          accessoryTitle={description}
+          actions={<ActionPanel>
+            <OpenAction
+              title="Open project in VSCode"
+              icon="vscode.png"
+              target={target}
+              application="Visual Studio Code"
+            />
+            <OpenAction
+              title="Open Hyper at this projects path"
+              icon="hyper.png"
+              target={target}
+              application="Hyper"
+            />
+          </ActionPanel>}
         />
-        <OpenAction
-          title="Open Hyper at this projects path"
-          icon="command-icon.png"
-          target={target}
-          application="Hyper"
-        />
-      </ActionPanel>}
-    />))}
+      ))
+    }
   </List>;
 };
 
