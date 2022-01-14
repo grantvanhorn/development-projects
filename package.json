@@ -1,7 +1,7 @@
 {
   "$schema": "https://www.raycast.com/schemas/extension.json",
   "name": "node-development-projects",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "title": "Node Development Projects",
   "description": "Perform actions on Node projects in your development directory. Open projects in VSCode or Hyper Terminal.",
   "icon": "nodejs.png",
